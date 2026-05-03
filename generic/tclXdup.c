@@ -55,9 +55,10 @@ DupChannelOptions (Tcl_Interp *interp,
                    Tcl_Channel srcChannel,
                    Tcl_Channel targetChannel)
 {
+    Tcl_Size optArgc;
     Tcl_DString strValues;
     const char *option, *value, **optArgv = NULL;
-    int optArgc, idx;
+    int idx;
 
     Tcl_DStringInit (&strValues);
 
@@ -207,17 +208,32 @@ TclX_DupObjCmd (ClientData clientData,
     /*
      * If a number is supplied, bind it to a file handle rather than doing
      * a dup.
+     *
+     * Tcl 9 compatibility:
+     * Tcl channels are named like "file5". Do not try to parse those as
+     * integers. First check whether the argument is an existing Tcl channel.
      */
-    if (objv [1]->typePtr == Tcl_GetObjType ("int")) {
-        bindFnum = TRUE;
-    } else {
-        srcChannelId = Tcl_GetStringFromObj (objv [1], NULL);
-        if (ISDIGIT (srcChannelId [0])) {
+    srcChannelId = Tcl_GetStringFromObj (objv [1], NULL);
+    {
+        int mode;
+        Tcl_Channel existingChannel;
+
+        existingChannel = Tcl_GetChannel (interp, srcChannelId, &mode);
+        if (existingChannel != NULL) {
+            bindFnum = FALSE;
+        } else if (ISDIGIT (srcChannelId [0])) {
+            Tcl_ResetResult (interp);
             if (Tcl_ConvertToType (interp, objv [1],
                                    Tcl_GetObjType ("int")) != TCL_OK)
                 goto badFnum;
             bindFnum = TRUE;
         } else {
+            /*
+             * Non-numeric and not an existing channel. Keep the channel path
+             * so DupFileChannel/Tcl_GetChannel reports:
+             * can not find channel named "..."
+             */
+            Tcl_ResetResult (interp);
             bindFnum = FALSE;
         }
     }
