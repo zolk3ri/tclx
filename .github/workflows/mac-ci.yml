@@ -1,106 +1,106 @@
 name: Mac CI
-
 on:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
-
+    branches: [master]
 jobs:
   build:
     runs-on: macos-latest
-
     env:
-      TCL_VERSION: 9.1a1
+      EXPECTED_TCL_VERSION: 9.1a1
       TCL_REPO: https://github.com/tcltk/tcl.git
       TCL_REF: core-9-1-a1
       TCL_PREFIX: /usr/local
-
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: Build Tcl 9.1a1
+        # Building Tcl to make sure we get tclInt.h
+        run: |
+          set -eux
 
-    - name: Build Tcl 9.1a1
-      # Building Tcl to make sure we get tclInt.h
-      run: |
-        set -eux
+          cd "$RUNNER_TEMP"
+          git clone --depth 1 --branch "$TCL_REF" "$TCL_REPO" tcl-src
 
-        cd "$RUNNER_TEMP"
-        git clone --depth 1 --branch "$TCL_REF" "$TCL_REPO" tcl-src
+          cd tcl-src/unix
+          ./configure --prefix="$TCL_PREFIX"
+          make -j"$(sysctl -n hw.ncpu)"
+          sudo make install
+      - name: Locate Tcl installation
+        run: |
+          set -eux
 
-        cd tcl-src/unix
-        ./configure --prefix="$TCL_PREFIX"
-        make -j"$(sysctl -n hw.ncpu)"
-        sudo make install
+          echo "Installed Tcl-related files:"
+          find "$TCL_PREFIX" \
+            \( -name 'tclConfig.sh' -o -name 'tclsh*' -o -name 'libtcl*' -o -name 'tclInt.h' \) \
+            -print
 
-    - name: Locate Tcl installation
-      run: |
-        set -eux
+          TCL_CONFIG="$(find "$TCL_PREFIX/lib" -path '*9.1*' -name 'tclConfig.sh' -print -quit)"
+          if [ -z "$TCL_CONFIG" ]; then
+            TCL_CONFIG="$(find "$TCL_PREFIX/lib" -name 'tclConfig.sh' -print -quit)"
+          fi
 
-        echo "Installed Tcl-related files:"
-        find "$TCL_PREFIX" \
-          \( -name 'tclConfig.sh' -o -name 'tclsh*' -o -name 'libtcl*' -o -name 'tclInt.h' \) \
-          -print
+          if [ -z "$TCL_CONFIG" ]; then
+            echo "Could not find tclConfig.sh under $TCL_PREFIX/lib"
+            exit 1
+          fi
 
-        TCL_CONFIG="$(find "$TCL_PREFIX/lib" -path '*9.1*' -name 'tclConfig.sh' -print -quit)"
-        if [ -z "$TCL_CONFIG" ]; then
-          TCL_CONFIG="$(find "$TCL_PREFIX/lib" -name 'tclConfig.sh' -print -quit)"
-        fi
+          TCL_CONFIG_DIR="$(dirname "$TCL_CONFIG")"
 
-        if [ -z "$TCL_CONFIG" ]; then
-          echo "Could not find tclConfig.sh under $TCL_PREFIX/lib"
-          exit 1
-        fi
+          # shellcheck source=/dev/null
+          . "$TCL_CONFIG"
 
-        TCL_CONFIG_DIR="$(dirname "$TCL_CONFIG")"
+          TCL_CONFIG_VERSION="${TCL_VERSION:-}${TCL_PATCH_LEVEL:-}"
 
-        if [ -x "$TCL_PREFIX/bin/tclsh9.1" ]; then
-          TCLSH="$TCL_PREFIX/bin/tclsh9.1"
-        elif [ -x "$TCL_PREFIX/bin/tclsh9.0" ]; then
-          TCLSH="$TCL_PREFIX/bin/tclsh9.0"
-        elif [ -x "$TCL_PREFIX/bin/tclsh" ]; then
-          TCLSH="$TCL_PREFIX/bin/tclsh"
-        else
-          echo "Could not find installed Tcl shell under $TCL_PREFIX/bin"
-          exit 1
-        fi
+          if [ "$TCL_CONFIG_VERSION" != "$EXPECTED_TCL_VERSION" ]; then
+            echo "Expected tclConfig.sh version $EXPECTED_TCL_VERSION, got ${TCL_CONFIG_VERSION:-unset}"
+            exit 1
+          fi
 
-        {
-          echo "TCL_CONFIG=$TCL_CONFIG"
-          echo "TCL_CONFIG_DIR=$TCL_CONFIG_DIR"
-          echo "TCLSH=$TCLSH"
-        } >> "$GITHUB_ENV"
+          if [ -x "$TCL_PREFIX/bin/tclsh9.1" ]; then
+            TCLSH="$TCL_PREFIX/bin/tclsh9.1"
+          elif [ -x "$TCL_PREFIX/bin/tclsh9.0" ]; then
+            TCLSH="$TCL_PREFIX/bin/tclsh9.0"
+          elif [ -x "$TCL_PREFIX/bin/tclsh" ]; then
+            TCLSH="$TCL_PREFIX/bin/tclsh"
+          else
+            echo "Could not find installed Tcl shell under $TCL_PREFIX/bin"
+            exit 1
+          fi
 
-        "$TCLSH" <<'EOF'
-        puts [info patchlevel]
-        EOF
+          {
+            echo "TCL_CONFIG=$TCL_CONFIG"
+            echo "TCL_CONFIG_DIR=$TCL_CONFIG_DIR"
+            echo "TCLSH=$TCLSH"
+          } >> "$GITHUB_ENV"
 
-        "$TCLSH" <<EOF | grep "^$TCL_VERSION$"
-        puts [info patchlevel]
-        EOF
+          "$TCLSH" <<'EOF'
+          puts [info patchlevel]
+          EOF
 
-    - name: configure
-      run: |
-        set -eux
+          "$TCLSH" <<EOF | grep "^$EXPECTED_TCL_VERSION$"
+          puts [info patchlevel]
+          EOF
+      - name: configure
+        run: |
+          set -eux
 
-        autoreconf -vi
-        ./configure --with-tcl="$TCL_CONFIG_DIR" --prefix=/usr/local
-
-    - name: make
-      run: |
-        set -eux
-        make
-
-    - name: test
-      # These tests fail on Mac *only* in the Github Actions containers, and this
-      # cannot be reproduced in a workable test environment. It may be related to
-      # the general signal handling issues with multithreaded TclX.
-      continue-on-error: true
-      run: |
-        set -eux
-        SKIPFILES="pipe.test process.test signal.test" make test
-
-    - name: install
-      run: |
-        set -eux
-        sudo make install
+          autoreconf -vi
+          ./configure --with-tcl="$TCL_CONFIG_DIR" --prefix=/usr/local
+      - name: make
+        run: |
+          set -eux
+          make
+      - name: test
+        # These tests fail on Mac *only* in the Github Actions containers, and this
+        # cannot be reproduced in a workable test environment. It may be related to
+        # the general signal handling issues with multithreaded TclX.
+        continue-on-error: true
+        run: |
+          set -eux
+          SKIPFILES="pipe.test process.test signal.test" make test
+      - name: install
+        run: |
+          set -eux
+          sudo make install
