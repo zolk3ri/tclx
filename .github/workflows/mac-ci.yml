@@ -1,6 +1,7 @@
 name: Mac CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [ master ]
   pull_request:
@@ -8,37 +9,98 @@ on:
 
 jobs:
   build:
-
     runs-on: macos-latest
 
+    env:
+      TCL_VERSION: 9.1a1
+      TCL_REPO: https://github.com/tcltk/tcl.git
+      TCL_REF: core-9-1-a1
+      TCL_PREFIX: /usr/local
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Build dependencies
-      # Building tcl to make sure we get tclInt.h
+    - uses: actions/checkout@v4
+
+    - name: Build Tcl 9.1a1
+      # Building Tcl to make sure we get tclInt.h
       run: |
-        sudo mkdir -p /usr/local/src/git
-        sudo chown `id -un` /usr/local/src/git
-        cd /usr/local/src/git
-        git clone https://github.com/tcltk/tcl.git
-        cd tcl
-        git checkout core-8-6-branch
-        cd unix
-        ./configure
-        make
+        set -eux
+
+        cd "$RUNNER_TEMP"
+        git clone --depth 1 --branch "$TCL_REF" "$TCL_REPO" tcl-src
+
+        cd tcl-src/unix
+        ./configure --prefix="$TCL_PREFIX"
+        make -j"$(sysctl -n hw.ncpu)"
         sudo make install
+
+    - name: Locate Tcl installation
+      run: |
+        set -eux
+
+        echo "Installed Tcl-related files:"
+        find "$TCL_PREFIX" \
+          \( -name 'tclConfig.sh' -o -name 'tclsh*' -o -name 'libtcl*' -o -name 'tclInt.h' \) \
+          -print
+
+        TCL_CONFIG="$(find "$TCL_PREFIX/lib" -path '*9.1*' -name 'tclConfig.sh' -print -quit)"
+        if [ -z "$TCL_CONFIG" ]; then
+          TCL_CONFIG="$(find "$TCL_PREFIX/lib" -name 'tclConfig.sh' -print -quit)"
+        fi
+
+        if [ -z "$TCL_CONFIG" ]; then
+          echo "Could not find tclConfig.sh under $TCL_PREFIX/lib"
+          exit 1
+        fi
+
+        TCL_CONFIG_DIR="$(dirname "$TCL_CONFIG")"
+
+        if [ -x "$TCL_PREFIX/bin/tclsh9.1" ]; then
+          TCLSH="$TCL_PREFIX/bin/tclsh9.1"
+        elif [ -x "$TCL_PREFIX/bin/tclsh9.0" ]; then
+          TCLSH="$TCL_PREFIX/bin/tclsh9.0"
+        elif [ -x "$TCL_PREFIX/bin/tclsh" ]; then
+          TCLSH="$TCL_PREFIX/bin/tclsh"
+        else
+          echo "Could not find installed Tcl shell under $TCL_PREFIX/bin"
+          exit 1
+        fi
+
+        {
+          echo "TCL_CONFIG=$TCL_CONFIG"
+          echo "TCL_CONFIG_DIR=$TCL_CONFIG_DIR"
+          echo "TCLSH=$TCLSH"
+        } >> "$GITHUB_ENV"
+
+        "$TCLSH" <<'EOF'
+        puts [info patchlevel]
+        EOF
+
+        "$TCLSH" <<EOF | grep "^$TCL_VERSION$"
+        puts [info patchlevel]
+        EOF
+
     - name: configure
       run: |
+        set -eux
+
         autoreconf -vi
-        ./configure --with-tcl=/usr/local/lib --prefix=/usr/local
+        ./configure --with-tcl="$TCL_CONFIG_DIR" --prefix=/usr/local
+
     - name: make
-      run: make
+      run: |
+        set -eux
+        make
+
     - name: test
       # These tests fail on Mac *only* in the Github Actions containers, and this
       # cannot be reproduced in a workable test environment. It may be related to
-      # the general signal handling issues with multithreaded TclX. Try re-enabling
-      # when on Tcl(x) 8.7 where the problem should be fixed.
+      # the general signal handling issues with multithreaded TclX.
       continue-on-error: true
-      run: SKIPFILES="pipe.test process.test signal.test" make test
-    - name: install
-      run: sudo make install
+      run: |
+        set -eux
+        SKIPFILES="pipe.test process.test signal.test" make test
 
+    - name: install
+      run: |
+        set -eux
+        sudo make install

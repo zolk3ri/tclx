@@ -1,6 +1,7 @@
 name: Linux CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [ master ]
   pull_request:
@@ -8,27 +9,115 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
+    env:
+      TCL_VERSION: 9.1a1
+      TCL_REPO: https://github.com/tcltk/tcl.git
+      TCL_REF: core-9-1-a1
+      TCL_PREFIX: /usr/local
+
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+
     - name: Install dependencies
       run: |
+        set -eux
+
         sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
         sudo apt-get update -qq
-        sudo apt-get install -y gcc-11 g++-11
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11
-        sudo apt-get install -y tcl8.6-dev
+        sudo apt-get install -y \
+          gcc-11 \
+          g++-11 \
+          build-essential \
+          git \
+          ca-certificates \
+          autoconf \
+          automake \
+          libtool \
+          make
+
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 \
+          --slave /usr/bin/g++ g++ /usr/bin/g++-11 \
+          --slave /usr/bin/gcov gcov /usr/bin/gcov-11
+
+    - name: Build Tcl 9.1a1
+      run: |
+        set -eux
+
+        git clone --depth 1 --branch "$TCL_REF" "$TCL_REPO" tcl-src
+
+        cd tcl-src/unix
+        ./configure --prefix="$TCL_PREFIX"
+        make -j"$(nproc)"
+        sudo make install
+        sudo ldconfig
+
+    - name: Locate Tcl installation
+      run: |
+        set -eux
+
+        echo "Installed Tcl-related files:"
+        find "$TCL_PREFIX" \
+          \( -name 'tclConfig.sh' -o -name 'tclsh*' -o -name 'libtcl*' -o -name 'tclInt.h' \) \
+          -print
+
+        TCL_CONFIG="$(find "$TCL_PREFIX/lib" -path '*9.1*' -name 'tclConfig.sh' -print -quit)"
+        if [ -z "$TCL_CONFIG" ]; then
+          TCL_CONFIG="$(find "$TCL_PREFIX/lib" -name 'tclConfig.sh' -print -quit)"
+        fi
+
+        if [ -z "$TCL_CONFIG" ]; then
+          echo "Could not find tclConfig.sh under $TCL_PREFIX/lib"
+          exit 1
+        fi
+
+        TCL_CONFIG_DIR="$(dirname "$TCL_CONFIG")"
+
+        if [ -x "$TCL_PREFIX/bin/tclsh9.1" ]; then
+          TCLSH="$TCL_PREFIX/bin/tclsh9.1"
+        elif [ -x "$TCL_PREFIX/bin/tclsh9.0" ]; then
+          TCLSH="$TCL_PREFIX/bin/tclsh9.0"
+        elif [ -x "$TCL_PREFIX/bin/tclsh" ]; then
+          TCLSH="$TCL_PREFIX/bin/tclsh"
+        else
+          echo "Could not find installed Tcl shell under $TCL_PREFIX/bin"
+          exit 1
+        fi
+
+        {
+          echo "TCL_CONFIG=$TCL_CONFIG"
+          echo "TCL_CONFIG_DIR=$TCL_CONFIG_DIR"
+          echo "TCLSH=$TCLSH"
+        } >> "$GITHUB_ENV"
+
+        "$TCLSH" <<'EOF'
+        puts [info patchlevel]
+        EOF
+
+        "$TCLSH" <<EOF | grep "^$TCL_VERSION$"
+        puts [info patchlevel]
+        EOF
+
     - name: configure
       run: |
+        set -eux
+
         autoreconf -vi
-        ./configure --with-tcl=/usr/lib/tcl8.6
+        ./configure --with-tcl="$TCL_CONFIG_DIR"
+
     - name: make
-      run: make
+      run: |
+        set -eux
+        make
+
     - name: check unit tests
       continue-on-error: true
-      run: make test
-    - name: install
-      run: sudo make install
+      run: |
+        set -eux
+        make test
 
+    - name: install
+      run: |
+        set -eux
+        sudo make install
