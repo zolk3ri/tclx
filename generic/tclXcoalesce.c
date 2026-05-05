@@ -31,6 +31,7 @@
 static int
 TclX_CoalesceObjCmd (ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
+    char *first;
     int i;
     Tcl_Obj *val;
     int start = 1;
@@ -41,7 +42,7 @@ TclX_CoalesceObjCmd (ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Ob
     }
 
     /* is -default specified? if so, handle */
-    char *first = Tcl_GetString (objv[1]);
+    first = Tcl_GetString (objv[1]);
     if (STREQU (first, "-default")) {
         if (objc < 4) goto badargs;
         start = 3;
