@@ -86,7 +86,6 @@ jobs:
         run: |
           set -eux
 
-          autoreconf -vi
           ./configure --with-tcl="$TCL_CONFIG_DIR" --prefix=/usr/local
       - name: make
         run: |
