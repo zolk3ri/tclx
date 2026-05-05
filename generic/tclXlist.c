@@ -18,34 +18,6 @@
 
 #include "tclExtdInt.h"
 
-static int __attribute__((unused))
-TclXGetIndexFromObj(Tcl_Interp *interp, Tcl_Obj *objPtr, Tcl_Size endValue, int *indexPtr)
-{
-    Tcl_Size indexSize;
-
-    if (Tcl_GetIntForIndex(interp, objPtr, endValue, &indexSize) != TCL_OK) {
-        return TCL_ERROR;
-    }
-
-    *indexPtr = (int) indexSize;
-    return TCL_OK;
-}
-
-
-#ifndef TCL_INDEX_NONE
-/*
- * Compatibility wrapper for Tcl index expressions.
- * Tcl_GetIntForIndex is available in modern Tcl and handles "end", "end-1",
- * "end+1", etc.
- */
-static int
-TclX_GetIndexFromObj(Tcl_Interp *interp, Tcl_Obj *objPtr, Tcl_Size endValue, int *indexPtr)
-{
-    return Tcl_GetIntForIndex(interp, objPtr, endValue, indexPtr);
-}
-#endif
-
-
 /* FIX: Need way to get lvarpush to append to end, or even fill in empty
    entries
 */

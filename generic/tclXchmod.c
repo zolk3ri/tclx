@@ -68,38 +68,6 @@ typedef struct {
     int    absMode;  /* Numeric mode. */
 } modeInfo_t;
 
-static int __attribute__ ((unused))
-ParseChmodModeObj(Tcl_Interp *interp, Tcl_Obj *objPtr, int *modePtr)
-{
-    const char *str;
-    char *endPtr;
-    Tcl_Size len;
-    long value;
-    int base = 10;
-
-    str = Tcl_GetStringFromObj(objPtr, &len);
-
-    /*
-     * Preserve TclX chmod semantics: mode strings with leading zero are
-     * interpreted as octal file modes.
-     */
-    if ((len > 1) && (str[0] == '0')) {
-        base = 8;
-    }
-
-    errno = 0;
-    value = strtol(str, &endPtr, base);
-
-    if ((errno != 0) || (endPtr == str) || (*endPtr != '\0') || (value < 0)) {
-        TclX_AppendObjResult(interp, "invalid file mode \"", str, "\"", NULL);
-        return TCL_ERROR;
-    }
-
-    *modePtr = (int) value;
-    return TCL_OK;
-}
-
-
 static char *FILE_ID_OPT = "-fileid";
 
 /*

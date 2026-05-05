@@ -21,29 +21,6 @@
 #include "tclExtdInt.h"
 
 /*
- * TclX string index compatibility.
- *
- * TclX historically accepts arithmetic index expressions such as:
- *     3*2
- *     len-3
- *     500-1
- *
- * TclXGetStringIndexFromObj in Tcl 9 accepts Tcl-style indices, but not TclX's
- * old expression syntax. TclX_RelativeExpr already implements the desired
- * TclX semantics, where "end" is length-1 and "len" is length.
- */
-static int __attribute__((unused))
-TclXGetStringIndexFromObj(Tcl_Interp *interp,
-                          Tcl_Obj *objPtr,
-                          int endValue,
-                          int *indexPtr)
-{
-    return TclX_RelativeExpr(interp, objPtr, endValue + 1, indexPtr);
-}
-
-
-
-/*
  * Prototypes of internal functions.
  */
 static int
