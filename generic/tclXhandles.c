@@ -24,12 +24,12 @@
  * Variable set to contain the alignment factor (in bytes) for this machine.
  * It is set on the first table initialization.
  */
-static int entryAlignment = 0;
+static size_t entryAlignment = 0;
 
 /*
  * Rounded size of an entry header
  */
-static int entryHeaderSize = 0;
+static size_t entryHeaderSize = 0;
 
 /*
  * Marco to rounded up a size to be a multiple of (void *).  This is required

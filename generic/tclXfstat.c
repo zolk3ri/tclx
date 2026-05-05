@@ -27,7 +27,7 @@
  * a socket.
  */
 static struct {
-    int intType;
+    mode_t intType;
     char *strType;
 } modeToSymTable [] = {
     {S_IFIFO,  "fifo"},

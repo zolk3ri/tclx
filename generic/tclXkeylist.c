@@ -173,6 +173,9 @@ static Tcl_ObjType keyedListType = {
     DupKeyedListInternalRep,  /* dupIntRepProc */
     UpdateStringOfKeyedList,  /* updateStringProc */
     SetKeyedListFromAny	      /* setFromAnyProc */
+#if TCL_MAJOR_VERSION >= 9
+    , TCL_OBJTYPE_V0
+#endif
 };
 
 

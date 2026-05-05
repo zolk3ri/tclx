@@ -100,10 +100,10 @@ TclX_LvarcatObjCmd (ClientData   clientData,
         catObjc = objc - 2;
     }
 
-    if (catObjc >= (sizeof (staticObjv) / sizeof (char *))) {
+    if ((size_t) catObjc >= (sizeof (staticObjv) / sizeof (staticObjv [0]))) {
         catObjv = (Tcl_Obj **) ckalloc (catObjc * sizeof (Tcl_Obj *));
     }
-    
+
     if (varObjPtr != NULL) {
         catObjv [0] = varObjPtr;
         argIdx = 1;
