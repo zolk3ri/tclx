@@ -26,12 +26,12 @@
 static int
 CheckForUniCode (Tcl_Interp *interp,
                  char *str,
-                 int strLen,
+                 Tcl_Size strLen,
                  char *which);
 
 static unsigned int
 ExpandString (unsigned char *inStr,
-              int            inLength,
+              Tcl_Size       inLength,
               unsigned char  outStr [],
               int           *outLengthPtr);
 
@@ -469,7 +469,7 @@ TclX_CequalObjCmd (ClientData clientData,
 static int
 CheckForUniCode (Tcl_Interp *interp,
                  char *str,
-                 int strLen,
+                 Tcl_Size strLen,
                  char *which)
 {
     int idx, nbytes;
@@ -502,7 +502,7 @@ CheckForUniCode (Tcl_Interp *interp,
 
 static unsigned int
 ExpandString (unsigned char *inStr,
-              int            inLength,
+              Tcl_Size      inLength,
               unsigned char  outStr [],
               int           *outLengthPtr)
 {

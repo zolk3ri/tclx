@@ -125,7 +125,7 @@ TclX_EchoObjCmd (ClientData dummy,
     Tcl_Channel channel;
 #ifndef TCL_UTF_MAX
     char *stringPtr;
-    int stringPtrLen;
+    Tcl_Size stringPtrLen;
 #endif
 
     channel = TclX_GetOpenChannel (interp, "stdout", TCL_WRITABLE);
