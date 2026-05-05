@@ -87,7 +87,8 @@ srcdir		= @srcdir@
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 
-bindir		= @bindir@
+datarootdir	= @datarootdir@
+bindir	 	= @bindir@
 libdir		= @libdir@
 datadir		= @datadir@
 mandir		= @mandir@
