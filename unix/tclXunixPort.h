@@ -34,7 +34,9 @@
 #include <assert.h>
 
 #ifndef __xlC__ /* AIX xlc */
+#ifndef h_errno
 extern int h_errno;
+#endif
 #endif
 
 /*
