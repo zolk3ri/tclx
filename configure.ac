@@ -5,7 +5,7 @@ dnl	to configure the system for the local environment.
 #
 # RCS: @(#) $Id: configure.in,v 1.17 2006/01/26 00:30:54 hobbs Exp $
 
-AC_INIT([tclx], [8.6])
+AC_INIT([tclx],[8.6])
 FULL_VERSION="8.6.3"
 
 TEA_INIT([3.9])
@@ -158,7 +158,19 @@ if test "${TEA_PLATFORM}" = "unix" ; then
     # What type do signals return?
     #-------------------------------------------------------------------------
     
-    AC_TYPE_SIGNAL
+    m4_warn([obsolete],
+[your code may safely assume C89 semantics that RETSIGTYPE is void.
+Remove this warning and the 'AC_CACHE_CHECK' when you adjust the code.])dnl
+AC_CACHE_CHECK([return type of signal handlers],[ac_cv_type_signal],[AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([#include <sys/types.h>
+#include <signal.h>
+],
+		 [return *(signal (0, 0)) (0) == 1;])],
+		   [ac_cv_type_signal=int],
+		   [ac_cv_type_signal=void])])
+AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type of signal handlers
+		    ('int' or 'void').])
+
     
     #-------------------------------------------------------------------------
     #       Find out all about time handling differences.
@@ -176,11 +188,11 @@ if test "${TEA_PLATFORM}" = "unix" ; then
 
     AC_MSG_CHECKING([union wait])
     AC_CACHE_VAL(tcl_cv_union_wait,
-	AC_TRY_LINK([#include <sys/types.h> 
-#include <sys/wait.h>], [
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h> 
+#include <sys/wait.h>]], [[
 union wait x;
 WIFEXITED(x);	/* Generates compiler error if WIFEXITED uses an int. */
-			 ], tcl_cv_union_wait=yes, tcl_cv_union_wait=no))
+			 ]])],[tcl_cv_union_wait=yes],[tcl_cv_union_wait=no]))
     AC_MSG_RESULT($tcl_cv_union_wait)
     if test $tcl_cv_union_wait = no; then
 	AC_DEFINE(NO_UNION_WAIT)
@@ -192,7 +204,7 @@ WIFEXITED(x);	/* Generates compiler error if WIFEXITED uses an int. */
     #-------------------------------------------------------------------------
     
     AC_MSG_CHECKING(checking to see what 'times' returns)
-    AC_TRY_RUN([
+    AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/times.h>
@@ -203,10 +215,8 @@ int main(void) {
     sleep(2);
     exit ((times(&cpu) > 0) ? 0 : 1);
 }
-], [AC_MSG_RESULT(elapsed real time)],
-       [AC_MSG_RESULT(a status)
-    	AC_DEFINE(TIMES_RETS_STATUS)],
-       [AC_MSG_ERROR(cross-compiling not supported)])
+]])],[AC_MSG_RESULT(elapsed real time)],[AC_MSG_RESULT(a status)
+    	AC_DEFINE(TIMES_RETS_STATUS)],[AC_MSG_ERROR(cross-compiling not supported)])
     
     #-------------------------------------------------------------------------
     # Check for missing typedefs.
@@ -271,10 +281,9 @@ int main(void) {
     
     AC_CHECK_FUNC(catgets,
     	[AC_MSG_CHECKING([catclose return value])
-    	 AC_TRY_COMPILE([#include <stdlib.h>
-         #include <nl_types.h>], [
-    	    if (catclose ((nl_catd) 0) == 0) exit (0);],
-    	    AC_MSG_RESULT(ok), [
+    	 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>
+         #include <nl_types.h>]], [[
+    	    if (catclose ((nl_catd) 0) == 0) exit (0);]])],[AC_MSG_RESULT(ok)],[
     	    AC_MSG_RESULT([broken catclose return type])
     	    AC_DEFINE(BAD_CATCLOSE)])],
     	[AC_DEFINE(NO_CATGETS)])
@@ -298,8 +307,8 @@ AC_CHECK_FUNC(random, ,[AC_LIBOBJ([random])]
 #------------------------------------------------------------------------------
 
 found_random=NO
-AC_HEADER_EGREP("random", stdlib.h, [found_random=YES])
-AC_HEADER_EGREP("random", math.h, [found_random=YES])
+AC_EGREP_HEADER(["random"],[stdlib.h],[found_random=YES])
+AC_EGREP_HEADER(["random"],[math.h],[found_random=YES])
 
 if test "$found_random" = "NO"; then
     AC_DEFINE(NO_RANDOM_PROTO)
@@ -361,4 +370,5 @@ TEA_PROG_TCLSH
 # Finally, substitute all of the various values into the Makefile.
 #--------------------------------------------------------------------
 
-AC_OUTPUT([Makefile])
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
