@@ -85,7 +85,7 @@ typedef struct profInfo_t {
 /*
  * Argument to Tcl_Panic on logic errors.  Takes an id number.
  */
-static const char *PROF_PANIC = "TclX profile bug id = %d\n";
+#define PROF_PANIC "TclX profile bug id = %d\n"
 
 /*
  * Prototypes of internal functions.
