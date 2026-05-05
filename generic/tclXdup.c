@@ -209,9 +209,9 @@ TclX_DupObjCmd (ClientData clientData,
      * If a number is supplied, bind it to a file handle rather than doing
      * a dup.
      *
-     * Tcl 9 compatibility:
-     * Tcl channels are named like "file5". Do not try to parse those as
-     * integers. First check whether the argument is an existing Tcl channel.
+     * First check whether the argument is an existing Tcl channel. If not,
+     * parse a numeric argument as a file descriptor using Tcl_GetIntFromObj
+     * rather than relying on Tcl's internal object type names.
      */
     srcChannelId = Tcl_GetStringFromObj (objv [1], NULL);
     {
@@ -223,8 +223,7 @@ TclX_DupObjCmd (ClientData clientData,
             bindFnum = FALSE;
         } else if (ISDIGIT (srcChannelId [0])) {
             Tcl_ResetResult (interp);
-            if (Tcl_ConvertToType (interp, objv [1],
-                                   Tcl_GetObjType ("int")) != TCL_OK)
+            if (Tcl_GetIntFromObj (interp, objv [1], &fnum) != TCL_OK)
                 goto badFnum;
             bindFnum = TRUE;
         } else {
