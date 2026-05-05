@@ -32,7 +32,7 @@
 typedef struct {
     Tcl_Channel channel;   /* Channel to read from */
     Tcl_DString buffer;    /* Buffer for line being read */
-    int lineIdx;           /* Index of next line to read. */
+    Tcl_Size lineIdx;      /* Index of next line to read. */
 } ReadData;
 
 
@@ -191,7 +191,8 @@ ReadListElement (Tcl_Interp  *interp,
     int inQuotes = 0;
     int numChars;
     char *p2;
-    int rstat, cpIdx;
+    int rstat;
+    Tcl_Size cpIdx;
 
     p = Tcl_DStringValue (&dataPtr->buffer) + dataPtr->lineIdx;
     limit = Tcl_DStringValue (&dataPtr->buffer) +
@@ -469,7 +470,7 @@ TclX_LgetsObjCmd (ClientData  clientData,
     if (objc == 2) {
         Tcl_SetObjResult (interp, dataObj);
     } else {
-        int resultLen;
+        Tcl_Size resultLen;
 
         if (Tcl_ObjSetVar2(interp, objv[2], NULL, dataObj,
                            TCL_LEAVE_ERR_MSG) == NULL) {
@@ -496,7 +497,7 @@ TclX_LgetsObjCmd (ClientData  clientData,
      */
     if (objc > 2) {
         Tcl_Obj *saveResult;
-        int len = Tcl_DStringLength (&readData.buffer) - readData.lineIdx;
+        Tcl_Size len = Tcl_DStringLength (&readData.buffer) - readData.lineIdx;
 
         if (len > 0) {
             Tcl_ListObjAppendElement (
