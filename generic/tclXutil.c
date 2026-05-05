@@ -782,7 +782,7 @@ TclX_JoinPath (char *path1, char *path2, Tcl_DString *joinedPath)
  *-----------------------------------------------------------------------------
  */
 int
-TclX_WrongArgs (Tcl_Interp *interp, Tcl_Obj *commandNameObj, char *string)
+TclX_WrongArgs (Tcl_Interp *interp, Tcl_Obj *commandNameObj, const char *string)
 {
     char    *commandName;
     Tcl_Obj *resultPtr = Tcl_GetObjResult (interp);
@@ -978,7 +978,7 @@ TclX_RestoreResultErrorInfo (Tcl_Interp *interp, Tcl_Obj *saveObjPtr)
 
 int
 TclX_CreateObjCommand (Tcl_Interp        *interp,
-                       char              *cmdName,
+                       const char        *cmdName,
                        Tcl_ObjCmdProc    *proc,
                        ClientData         clientData,
                        Tcl_CmdDeleteProc *deleteProc,

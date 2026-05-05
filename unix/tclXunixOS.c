@@ -65,7 +65,7 @@ ConvertOwnerGroup (Tcl_Interp  *interp,
  *-----------------------------------------------------------------------------
  */
 int
-TclXNotAvailableError (Tcl_Interp *interp, char *funcName)
+TclXNotAvailableError (Tcl_Interp *interp, const char *funcName)
 {
     TclX_AppendObjResult (interp, funcName, " is not available on this system",
                           (char *) NULL);
@@ -157,7 +157,7 @@ TclXOSTicksToMS (clock_t numTicks)
  *-----------------------------------------------------------------------------
  */
 int
-TclXOSgetpriority (Tcl_Interp *interp, int *priority, char *funcName)
+TclXOSgetpriority (Tcl_Interp *interp, int *priority, const char *funcName)
 {
 #ifndef NO_GETPRIORITY
     *priority = getpriority (PRIO_PROCESS, 0);
@@ -181,7 +181,7 @@ TclXOSgetpriority (Tcl_Interp *interp, int *priority, char *funcName)
  *-----------------------------------------------------------------------------
  */
 int
-TclXOSincrpriority (Tcl_Interp *interp, int priorityIncr, int *priority, char *funcName)
+TclXOSincrpriority (Tcl_Interp *interp, int priorityIncr, int *priority, const char *funcName)
 {
     errno = 0;  /* Old priority might be -1 */
 
@@ -248,7 +248,7 @@ TclXOSpipe (Tcl_Interp *interp, Tcl_Channel *channels)
  *-----------------------------------------------------------------------------
  */
 int
-TclXOSsetitimer (Tcl_Interp *interp, double *seconds, char *funcName)
+TclXOSsetitimer (Tcl_Interp *interp, double *seconds, const char *funcName)
 {
 /*
  * A million microseconds per seconds.
@@ -457,7 +457,7 @@ TclXOSsystem (Tcl_Interp *interp, char *command, int *exitCode)
  *-----------------------------------------------------------------------------
  */
 int
-TclX_OSlink (Tcl_Interp *interp, char *srcPath, char *targetPath, char *funcName)
+TclX_OSlink (Tcl_Interp *interp, char *srcPath, char *targetPath, const char *funcName)
 {
     if (link (srcPath, targetPath) != 0) {
         TclX_AppendObjResult (interp, "linking \"", srcPath, "\" to \"",
@@ -482,7 +482,7 @@ TclX_OSlink (Tcl_Interp *interp, char *srcPath, char *targetPath, char *funcName
  *-----------------------------------------------------------------------------
  */
 int
-TclX_OSsymlink (Tcl_Interp *interp, char *srcPath, char *targetPath, char *funcName)
+TclX_OSsymlink (Tcl_Interp *interp, char *srcPath, char *targetPath, const char *funcName)
 {
 #ifdef S_IFLNK
     if (symlink (srcPath, targetPath) != 0) {
@@ -555,7 +555,7 @@ TclXOSElapsedTime (clock_t *realTime, clock_t *cpuTime)
  *-----------------------------------------------------------------------------
  */
 int
-TclXOSkill (Tcl_Interp *interp, pid_t pid, int signal, char *funcName)
+TclXOSkill (Tcl_Interp *interp, pid_t pid, int signal, const char *funcName)
 {
     if (kill (pid, signal) < 0) {
         char pidStr [32];
@@ -760,7 +760,7 @@ TclXOSGetFileSize (Tcl_Channel channel, off_t *fileSize)
  *-----------------------------------------------------------------------------
  */
 int
-TclXOSftruncate (Tcl_Interp *interp, Tcl_Channel channel, off_t newSize, char *funcName)
+TclXOSftruncate (Tcl_Interp *interp, Tcl_Channel channel, off_t newSize, const char *funcName)
 {
 #if (!defined(NO_FTRUNCATE)) || defined(HAVE_CHSIZE) 
     int stat;
@@ -1008,7 +1008,7 @@ TclXOSchmod (Tcl_Interp *interp, char *fileName, int mode)
  *-----------------------------------------------------------------------------
  */
 int
-TclXOSfchmod (Tcl_Interp *interp, Tcl_Channel channel, int mode, char *funcName)
+TclXOSfchmod (Tcl_Interp *interp, Tcl_Channel channel, int mode, const char *funcName)
 {
 #ifndef NO_FCHMOD
     if (fchmod (ChannelToFnum (channel, 0), mode) < 0) {
@@ -1146,7 +1146,7 @@ TclXOSChangeOwnGrpObj  (Tcl_Interp *interp,
                         char *ownerStr,
                         char *groupStr,
                         Tcl_Obj *fileListObj,
-                        char *funcName)
+                        const char *funcName)
 {
     int          idx;
     struct stat  fileStat;
@@ -1228,7 +1228,7 @@ TclXOSFChangeOwnGrpObj (Tcl_Interp *interp,
                         char *ownerStr,
                         char *groupStr,
                         Tcl_Obj *channelIdsObj,
-                        char *funcName)
+                        const char *funcName)
 {
 #ifndef NO_FCHOWN
     int          idx, fnum;
@@ -1303,7 +1303,7 @@ TclXOSFChangeOwnGrpObj (Tcl_Interp *interp,
  *-----------------------------------------------------------------------------
  */
 int
-TclXOSFChangeOwnGrp (Tcl_Interp *interp, unsigned options, char *ownerStr, char *groupStr, char **channelIds, char *funcName)
+TclXOSFChangeOwnGrp (Tcl_Interp *interp, unsigned options, char *ownerStr, char *groupStr, char **channelIds, const char *funcName)
 {
 #ifndef NO_FCHOWN
     int idx, fnum;

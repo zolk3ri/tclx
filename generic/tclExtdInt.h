@@ -217,7 +217,7 @@ typedef int
  */
 
 extern int
-TclX_CreateObjCommand (Tcl_Interp* interp, char* cmdName,
+TclX_CreateObjCommand (Tcl_Interp* interp, const char *cmdName,
                        Tcl_ObjCmdProc *proc, ClientData clientData,
                        Tcl_CmdDeleteProc *deleteProc, int flags);
 
@@ -308,7 +308,7 @@ TclX_JoinPath (char        *path1,
 extern int  
 TclX_WrongArgs (Tcl_Interp *interp, 
                 Tcl_Obj    *commandNameObj, 
-			    char       *string);
+			    const char *string);
 
 extern int
 TclX_IsNullObj (Tcl_Obj *objPtr);
@@ -428,7 +428,7 @@ TclXOSBindOpenFile (Tcl_Interp *interp,
  */
 extern int
 TclXNotAvailableError (Tcl_Interp *interp,
-                       char       *funcName);
+                       const char *funcName);
 extern int
 TclXNotAvailableObjError (Tcl_Interp *interp,
                           Tcl_Obj *obj);
@@ -439,13 +439,13 @@ TclXOSTicksToMS (clock_t numTicks);
 extern int
 TclXOSgetpriority (Tcl_Interp *interp,
                    int        *priority,
-                   char       *funcName);
+                   const char *funcName);
 
 extern int
 TclXOSincrpriority (Tcl_Interp *interp,
                     int         priorityIncr,
                     int        *priority,
-                    char       *funcName);
+                    const char *funcName);
 
 extern int
 TclXOSpipe (Tcl_Interp *interp,
@@ -454,7 +454,7 @@ TclXOSpipe (Tcl_Interp *interp,
 extern int
 TclXOSsetitimer (Tcl_Interp *interp,
                  double     *seconds,
-                 char       *funcName);
+                 const char *funcName);
 
 extern void
 TclXOSsleep (unsigned seconds);
@@ -475,12 +475,12 @@ extern int
 TclX_OSlink (Tcl_Interp *interp,
              char       *srcPath,
              char       *destPath,
-             char       *funcName);
+             const char *funcName);
 extern int
 TclX_OSsymlink (Tcl_Interp *interp,
                 char       *srcPath,
                 char       *destPath,
-                char       *funcName);
+                const char *funcName);
 
 extern void
 TclXOSElapsedTime (clock_t *realTime,
@@ -490,7 +490,7 @@ extern int
 TclXOSkill (Tcl_Interp *interp,
             pid_t       pid,
             int         signal,
-            char       *funcName);
+            const char *funcName);
 
 extern int
 TclXOSFstat (Tcl_Interp  *interp,
@@ -518,7 +518,7 @@ extern int
 TclXOSftruncate (Tcl_Interp  *interp,
                  Tcl_Channel  channel,
                  off_t        newSize,
-                 char        *funcName);
+                 const char *funcName);
 
 extern int
 TclXOSfork (Tcl_Interp *interp,
@@ -567,14 +567,14 @@ extern int
 TclXOSfchmod (Tcl_Interp *interp,
               Tcl_Channel channel,
               int         mode,
-              char       *funcName);
+              const char *funcName);
 extern int  
 TclXOSChangeOwnGrpObj (Tcl_Interp  *interp,
                        unsigned     options,
                        char        *ownerStr,
                        char        *groupStr,
                        Tcl_Obj     *fileList,
-                       char        *funcName);
+                       const char *funcName);
 
 extern int
 TclXOSFChangeOwnGrpObj (Tcl_Interp *interp,
@@ -582,7 +582,7 @@ TclXOSFChangeOwnGrpObj (Tcl_Interp *interp,
                         char       *ownerStr,
                         char       *groupStr,
                         Tcl_Obj    *channelIdList,
-                        char       *funcName);
+                        const char *funcName);
 
 int
 TclXOSGetSelectFnum (Tcl_Interp *interp,
