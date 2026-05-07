@@ -234,7 +234,7 @@ test profile-3.1 {profile count tests} {
 	{{::ProcD3 ::ProcB3 ::ProcA3 <global>} 1} \
 	{{::ProcD3 ::ProcC3 ::ProcB3 ::ProcA3 <global>} 1}]
 
-if {$tcl_version >= 9} {
+if {[package vsatisfies [package require Tcl] 9-]} {
     set profile_3_2_expected [list \
         {<global> 1} \
         {<global> 1} \
@@ -279,7 +279,7 @@ test profile-3.3 {profile count tests} {
 	{{::ProcC3 ::ProcB3 ::ProcA3 <global>} 1} \
 	{{::ProcD3 ::ProcC3 ::ProcB3 ::ProcA3 <global>} 2}]
 
-if {$tcl_version >= 9} {
+if {[package vsatisfies [package require Tcl] 9-]} {
     set profile_3_4_expected [list \
         {<global> 1} \
         {<global> 1} \
