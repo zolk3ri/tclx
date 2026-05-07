@@ -440,8 +440,17 @@ ProfCommandEvalSetup (profInfo_t *infoPtr, int *isProcPtr)
     /*
      * If this command is a procedure or if all commands are being traced,
      * handle the entry.
+     *
+     * The trace callback has already saved the real command implementation.
+     * Tcl 9 may route commands through wrapper object procs, and some native
+     * commands use the command token as client data, so neither objProc nor
+     * objClientData is a reliable "is Tcl procedure" test here.
+     *
+     * Tcl procedure commands use TclProcDeleteProc as their command delete
+     * hook.  That is narrower than objClientData==currentCmd and avoids
+     * recording native commands such as "join" in ordinary proc-only profiling.
      */
-    isProc = (TclFindProc (iPtr, fullCmdName) != NULL);
+    isProc = (infoPtr->savedCmdInfo.deleteProc == TclProcDeleteProc);
     if (infoPtr->commandMode || isProc) {
         UpdateTOSTimes (infoPtr);
         if (isProc) {
