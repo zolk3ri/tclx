@@ -4095,10 +4095,7 @@ FULL_VERSION="${TCL_VERSION}${TCL_PATCH_LEVEL}"
 
 
 
-printf "%s\n" "#define PACKAGE_VERSION \"${PACKAGE_VERSION}\"" >>confdefs.h
-
-
-printf "%s\n" "#define PACKAGE_STRING \"${PACKAGE_STRING}\"" >>confdefs.h
+printf "%s\n" "#define TCLX_PACKAGE_VERSION \"${PACKAGE_VERSION}\"" >>confdefs.h
 
 
 printf "%s\n" "#define FULL_VERSION \"${FULL_VERSION}\"" >>confdefs.h
