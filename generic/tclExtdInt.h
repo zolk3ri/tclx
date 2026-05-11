@@ -37,6 +37,7 @@
  */
 #ifndef TCL_SIZE_MAX
 typedef int Tcl_Size;
+#define TCL_SIZE_MAX INT_MAX
 #define TCL_SIZE_MODIFIER ""
 #endif
 
