@@ -42,6 +42,19 @@ typedef int Tcl_Size;
 #endif
 
 /*
+ * Mark intentionally-unused callback parameters.  TclX command and trace
+ * callbacks must keep the signatures expected by Tcl even when individual
+ * callbacks do not use every argument.
+ */
+#ifndef TCLX_UNUSED
+#   if defined(__GNUC__) || defined(__clang__)
+#       define TCLX_UNUSED __attribute__((unused))
+#   else
+#       define TCLX_UNUSED
+#   endif
+#endif
+
+/*
  * Internal interp flags compatibility - removed in Tcl 8.5 sources.
  */
 #ifndef ERR_IN_PROGRESS
