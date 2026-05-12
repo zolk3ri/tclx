@@ -284,7 +284,7 @@ TclX_LvarpushObjCmd (ClientData   clientData,
         goto errorExit;
 
     if (Tcl_SetVar2Ex(interp, varName, NULL, listVarPtr,
-                      0| TCL_LEAVE_ERR_MSG) == NULL) {
+                      TCL_LEAVE_ERR_MSG) == NULL) {
         goto errorExit;
     }
     return TCL_OK;
