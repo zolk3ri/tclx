@@ -46,11 +46,7 @@ if {[llength $::tcltest::matchFiles] > 0} {
 set timeCmd {clock format [clock seconds]}
 puts stdout "Tests began at [eval $timeCmd]"
 
-set tclPatchLevel [package require Tcl]
-if {![regexp {^([0-9]+)\.([0-9]+)} $tclPatchLevel -> tclMajor tclMinor]} {
-    error "could not determine Tcl major/minor version from \"$tclPatchLevel\""
-}
-package require Tclx "${tclMajor}.${tclMinor}"
+package require Tclx
 
 # Hook to determine if any of the tests failed. Then we can exit with
 # proper exit code: 0=all passed, 1=one or more failed

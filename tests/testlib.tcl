@@ -26,11 +26,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import ::tcltest::*
 }
 
-set tclPatchLevel [package require Tcl]
-if {![regexp {^([0-9]+)\.([0-9]+)} $tclPatchLevel -> tclMajor tclMinor]} {
-    error "could not determine Tcl major/minor version from \"$tclPatchLevel\""
-}
-package require Tclx "${tclMajor}.${tclMinor}"
+package require Tclx
 
 foreach need {
     fchown fchmod flock fsync ftruncate msgcats posix_signals symlink
