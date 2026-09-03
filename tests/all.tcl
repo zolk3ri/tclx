@@ -49,10 +49,14 @@ puts stdout "Tests began at [eval $timeCmd]"
 package require Tclx
 
 # Hook to determine if any of the tests failed. Then we can exit with
-# proper exit code: 0=all passed, 1=one or more failed
+# proper exit code: 0=all passed, 1=one or more failed.  A test file
+# that raises an error stops running at that point, so the tests below
+# the error are never counted and the run would otherwise look clean.
+set ::fileErrors 0
+
 proc tcltest::cleanupTestsHook {} {
 	variable numTests
-	set ::exitCode [expr {$numTests(Failed) > 0}]
+	set ::exitCode [expr {($numTests(Failed) > 0) || ($::fileErrors > 0)}]
 }
 
 
@@ -60,8 +64,10 @@ proc tcltest::cleanupTestsHook {} {
 foreach file [lsort [::tcltest::getMatchingFiles]] {
 	set tail [file tail $file]
 	puts stdout $tail
-	if {[catch {source $file} msg]} {
-		puts stdout $msg
+	if {[catch {source $file} msg opts]} {
+		incr ::fileErrors
+		puts stdout "ERROR: $tail stopped before the end of the file: $msg"
+		puts stdout [dict get $opts -errorinfo]
 	}
 }
 # TODO: convert above to use ::tcltest::runAllTests?s
