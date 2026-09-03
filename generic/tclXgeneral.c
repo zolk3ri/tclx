@@ -181,7 +181,22 @@ TclX_InfoxObjCmd (ClientData clientData,
 
     if (STREQU ("version", optionPtr)) {
         if (tclxVersion != NULL) {
-            Tcl_SetStringObj (resultPtr, tclxVersion, -1);
+            const char *tclPatchLevel;
+            Tcl_DString versionStr;
+
+            Tcl_DStringInit (&versionStr);
+            Tcl_DStringAppend (&versionStr, tclxVersion, -1);
+
+            tclPatchLevel = Tcl_GetVar (interp, "tcl_patchLevel",
+                                        TCL_GLOBAL_ONLY);
+            if (tclPatchLevel != NULL) {
+                Tcl_DStringAppend (&versionStr, " for Tcl ", -1);
+                Tcl_DStringAppend (&versionStr, tclPatchLevel, -1);
+            }
+
+            Tcl_SetStringObj (resultPtr, Tcl_DStringValue (&versionStr),
+                              Tcl_DStringLength (&versionStr));
+            Tcl_DStringFree (&versionStr);
         }
         return TCL_OK;
     }
