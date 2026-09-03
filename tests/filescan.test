@@ -401,9 +401,16 @@ scancontext delete $testCH
 
 set testCH [scancontext create]
 
+#
+# Tcl 9 reworded the regular expression compilation error.  scanmatch
+# passes the message through from the same interpreter routine regexp
+# uses, so take the expected text from there instead of hard coding it.
+#
+catch {regexp {a[} {}} badRegExpMsg
+
 Test filescan-7.1 {filescan tests} {
     scanmatch $testCH {a[} {}
-} 1 {couldn't compile regular expression pattern: brackets [] not balanced}
+} 1 $badRegExpMsg
 
 #
 # Test the copy file manipulation by sorting a file of numbered lines into two
