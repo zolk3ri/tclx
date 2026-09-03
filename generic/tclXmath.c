@@ -96,11 +96,5 @@ TclX_MathInit(Tcl_Interp *interp)
         "    if {![llength [info commands random]]} {\n"
         "        proc random {limit} {expr {int(rand() * $limit)}}\n"
         "    }\n"
-        "}\n"
-        "\n"
-        "if {![llength [info commands ::case]]} {\n"
-        "    proc ::case {value args} {\n"
-        "        tailcall switch -- $value {*}$args\n"
-        "    }\n"
         "}\n");
 }
