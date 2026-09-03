@@ -4261,6 +4261,10 @@ _ACEOF
 # track the detected Tcl version instead, which TEA uses to name the
 # generated shared library and package directory, so libtclx8.6.so and
 # libtclx9.1.so stay distinct and coexist on disk.
+#
+# The runtime script library search locates that same package directory
+# by name, so TCLX_LIB_DIR_VERSION carries the value PACKAGE_VERSION
+# ends up with rather than the TclX release version.
 #-----------------------------------------------------------------------
 
 TCLX_PACKAGE_VERSION="${PACKAGE_VERSION}"
@@ -4277,6 +4281,11 @@ FULL_VERSION="${TCLX_PACKAGE_VERSION}.0"
 
 cat >>confdefs.h <<_ACEOF
 #define TCLX_PACKAGE_VERSION "${TCLX_PACKAGE_VERSION}"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define TCLX_LIB_DIR_VERSION "${PACKAGE_VERSION}"
 _ACEOF
 
 

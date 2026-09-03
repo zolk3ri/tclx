@@ -25,6 +25,10 @@ TEA_LOAD_TCLCONFIG
 # track the detected Tcl version instead, which TEA uses to name the
 # generated shared library and package directory, so libtclx8.6.so and
 # libtclx9.1.so stay distinct and coexist on disk.
+#
+# The runtime script library search locates that same package directory
+# by name, so TCLX_LIB_DIR_VERSION carries the value PACKAGE_VERSION
+# ends up with rather than the TclX release version.
 #-----------------------------------------------------------------------
 
 TCLX_PACKAGE_VERSION="${PACKAGE_VERSION}"
@@ -40,6 +44,9 @@ AC_SUBST(FULL_VERSION)
 
 AC_DEFINE_UNQUOTED(TCLX_PACKAGE_VERSION, "${TCLX_PACKAGE_VERSION}",
                    [Define to the TclX package version.])
+AC_DEFINE_UNQUOTED(TCLX_LIB_DIR_VERSION, "${PACKAGE_VERSION}",
+                   [Define to the version suffix of the installed TclX
+                    script library directory.])
 AC_DEFINE_UNQUOTED(FULL_VERSION, "${FULL_VERSION}",
                    [Define to the full TclX version.])
 
