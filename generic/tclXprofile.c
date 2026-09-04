@@ -69,6 +69,7 @@ typedef struct profInfo_t {
     int             evalMode;              /* Use eval stack.                */
     Tcl_Command     currentCmd;            /* Current command table entry.   */
     Tcl_CmdInfo     savedCmdInfo;          /* Details about the current cmd. */
+    Tcl_CmdDeleteProc *procDeleteProc;     /* Delete hook Tcl gives procs.   */
     int             evalLevel;             /* Eval level when invoked.       */
     clock_t         realTime;              /* Current real and CPU time.     */
     clock_t         cpuTime;
@@ -144,7 +145,10 @@ static void
 InitializeProcStack (profInfo_t *infoPtr,
                      CallFrame  *framePtr);
 
-static void
+static Tcl_CmdDeleteProc *
+GetProcDeleteProc (Tcl_Interp *interp);
+
+static int
 TurnOnProfiling (profInfo_t *infoPtr,
                  int         commandMode,
                  int         evalMode);
@@ -446,11 +450,12 @@ ProfCommandEvalSetup (profInfo_t *infoPtr, int *isProcPtr)
      * commands use the command token as client data, so neither objProc nor
      * objClientData is a reliable "is Tcl procedure" test here.
      *
-     * Tcl procedure commands use TclProcDeleteProc as their command delete
-     * hook.  That is narrower than objClientData==currentCmd and avoids
-     * recording native commands such as "join" in ordinary proc-only profiling.
+     * Tcl procedure commands all share one command delete hook, whose address
+     * is determined when profiling is turned on.  That is narrower than
+     * objClientData==currentCmd and avoids recording native commands such as
+     * "join" in ordinary proc-only profiling.
      */
-    isProc = (infoPtr->savedCmdInfo.deleteProc == TclProcDeleteProc);
+    isProc = (infoPtr->savedCmdInfo.deleteProc == infoPtr->procDeleteProc);
     if (infoPtr->commandMode || isProc) {
         UpdateTOSTimes (infoPtr);
         if (isProc) {
@@ -711,6 +716,39 @@ InitializeProcStack (profInfo_t *infoPtr, CallFrame *framePtr)
 }
 
 /*-----------------------------------------------------------------------------
+ * GetProcDeleteProc --
+ *   Determine the command delete callback that Tcl attaches to procedures.
+ * A short lived procedure is created and its command information read back,
+ * which keeps this to documented interfaces.  The callback itself is internal
+ * to Tcl, is absent from the stub table, and is not exported at all on some
+ * platforms, so it cannot be named directly by a stubs enabled extension.
+ *
+ * Parameters:
+ *   o interp - The interpreter to probe.
+ * Returns:
+ *   The delete callback, or NULL if it could not be determined.
+ *-----------------------------------------------------------------------------
+ */
+static Tcl_CmdDeleteProc *
+GetProcDeleteProc (Tcl_Interp *interp)
+{
+    static const char *probeName = "::TclXProfileProbe";
+    Tcl_CmdInfo cmdInfo;
+    Tcl_CmdDeleteProc *deleteProc = NULL;
+
+    if (Tcl_Eval (interp, "proc ::TclXProfileProbe {} {}") != TCL_OK)
+        return NULL;
+
+    if (Tcl_GetCommandInfo (interp, probeName, &cmdInfo))
+        deleteProc = cmdInfo.deleteProc;
+
+    Tcl_DeleteCommand (interp, probeName);
+    Tcl_ResetResult (interp);
+
+    return deleteProc;
+}
+
+/*-----------------------------------------------------------------------------
  * TurnOnProfiling --
  *    Turn on profiling.
  *
@@ -720,14 +758,27 @@ InitializeProcStack (profInfo_t *infoPtr, CallFrame *framePtr)
  *     procs.
  *   o evalMode - TRUE if eval stack is to be used to log entries.  FALSE if
  *     the scope stack is to be used.
+ * Returns:
+ *   TCL_OK or TCL_ERROR.
  *-----------------------------------------------------------------------------
  */
-static void
+static int
 TurnOnProfiling (profInfo_t *infoPtr, int commandMode, int evalMode)
 {
     Interp *iPtr = (Interp *) infoPtr->interp;
     int scopeLevel;
     profEntry_t *scanPtr;
+
+    if (infoPtr->procDeleteProc == NULL) {
+        infoPtr->procDeleteProc = GetProcDeleteProc (infoPtr->interp);
+        if (infoPtr->procDeleteProc == NULL) {
+            TclX_AppendObjResult (infoPtr->interp,
+                                  "cannot identify Tcl procedures in this ",
+                                  "interpreter, profiling is unavailable",
+                                  (char *) NULL);
+            return TCL_ERROR;
+        }
+    }
 
     CleanDataTable (infoPtr);
 
@@ -769,6 +820,8 @@ TurnOnProfiling (profInfo_t *infoPtr, int commandMode, int evalMode)
      * Get the time we started.
      */
     TclXOSElapsedTime (&infoPtr->realTime, &infoPtr->cpuTime);
+
+    return TCL_OK;
 }
 
 /*-----------------------------------------------------------------------------
@@ -908,8 +961,7 @@ TclX_ProfileObjCmd (ClientData   clientData,
             return TCL_ERROR; 
         }
 
-        TurnOnProfiling (infoPtr, commandMode, evalMode);
-        return TCL_OK;
+        return TurnOnProfiling (infoPtr, commandMode, evalMode);
     }
 
     /*
@@ -987,6 +1039,7 @@ TclX_ProfileInit (Tcl_Interp *interp)
     infoPtr->commandMode = FALSE;
     infoPtr->evalMode = FALSE;
     infoPtr->currentCmd = NULL;
+    infoPtr->procDeleteProc = NULL;
     infoPtr->evalLevel = UNKNOWN_LEVEL;
     infoPtr->realTime = 0;
     infoPtr->cpuTime = 0;
