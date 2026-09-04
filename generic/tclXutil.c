@@ -386,6 +386,7 @@ TclX_RelativeExpr (Tcl_Interp *interp, Tcl_Obj *exprPtr, int baseValue, int *res
 
     if (result == TCL_OK) {
         result = Tcl_GetIntFromObj(interp, valueObj, resultPtr);
+        Tcl_DecrRefCount(valueObj);
     }
 
     Tcl_DStringFree(&ds);
